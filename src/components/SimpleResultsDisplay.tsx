@@ -23,7 +23,9 @@ import {
   Business,
   Person,
   TrendingUp,
-  Edit
+  Edit,
+  Download,
+  Code
 } from '@mui/icons-material';
 import {
   RadarChart,
@@ -33,14 +35,15 @@ import {
   Radar,
   ResponsiveContainer
 } from 'recharts';
-import { RiskAssessmentResult, RiskLevel } from '../types/lcbft';
+import { RiskAssessmentResult, RiskLevel, RiskAssessmentRequest } from '../types/lcbft';
 
 interface SimpleResultsDisplayProps {
   results: RiskAssessmentResult;
+  formData?: RiskAssessmentRequest;
   onBackToEvaluation?: () => void;
 }
 
-export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ results, onBackToEvaluation }) => {
+export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ results, formData, onBackToEvaluation }) => {
   const getRiskColor = (level: RiskLevel) => {
     switch (level) {
       case RiskLevel.FAIBLE: return { color: '#4caf50', bg: '#e8f5e8' };
@@ -84,6 +87,75 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
     }
   };
 
+  const generateJSONExport = () => {
+    const exportData = {
+      metadata: {
+        application: "Perspicuus LCBFT",
+        version: "1.0.0",
+        generated_at: new Date().toISOString(),
+        disclaimer: "Outil d'aide à la décision - Ne constitue pas un engagement de conformité réglementaire"
+      },
+      evaluation_request: formData || null,
+      risk_assessment_results: {
+        overall: {
+          risk_level: results.niveau_risque,
+          risk_level_fr: getRiskLabelFr(results.niveau_risque),
+          total_score: results.score_total,
+          max_possible_score: 20
+        },
+        geographic_risk: {
+          score: results.score_geo.score,
+          justifications: results.score_geo.justifications
+        },
+        product_service_risk: {
+          score: results.score_produit.score,
+          justifications: results.score_produit.justifications
+        },
+        client_risk: {
+          score: results.score_client.score,
+          justifications: results.score_client.justifications
+        },
+        recommendations: results.recommandations.map(rec => 
+          rec.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+        )
+      }
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `perspicuus_evaluation_${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+  };
+
+  const generateCompactJSONExport = () => {
+    const compactData = {
+      timestamp: new Date().toISOString(),
+      risk_level: results.niveau_risque,
+      total_score: results.score_total,
+      scores: {
+        geographic: results.score_geo.score,
+        product_service: results.score_produit.score,
+        client: results.score_client.score
+      },
+      key_factors: [
+        ...results.score_geo.justifications,
+        ...results.score_produit.justifications,
+        ...results.score_client.justifications
+      ]
+    };
+    
+    const dataStr = JSON.stringify(compactData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `perspicuus_compact_${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+  };
+
   // Données pour le graphique radar
   const radarData = [
     {
@@ -106,20 +178,41 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4" component="h1">
           📊 Résultats de l'Évaluation
         </Typography>
-        {onBackToEvaluation && (
+        <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
           <Button
             variant="outlined"
-            startIcon={<Edit />}
-            onClick={onBackToEvaluation}
-            sx={{ flexShrink: 0 }}
+            size="small"
+            startIcon={<Download />}
+            onClick={generateJSONExport}
+            sx={{ minWidth: 'fit-content' }}
           >
-            Modifier l'évaluation
+            Export JSON
           </Button>
-        )}
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<Code />}
+            onClick={generateCompactJSONExport}
+            sx={{ minWidth: 'fit-content' }}
+          >
+            JSON Compact
+          </Button>
+          {onBackToEvaluation && (
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<Edit />}
+              onClick={onBackToEvaluation}
+              sx={{ minWidth: 'fit-content' }}
+            >
+              Modifier
+            </Button>
+          )}
+        </Stack>
       </Box>
 
       {/* Score Global */}

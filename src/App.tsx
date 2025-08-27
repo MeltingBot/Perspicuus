@@ -210,7 +210,7 @@ function App() {
                     Télécharger le rapport PDF
                   </Button>
                 </Box>
-                <SimpleResultsDisplay results={assessmentResults} onBackToEvaluation={handleBackToEvaluation} />
+                <SimpleResultsDisplay results={assessmentResults} formData={currentFormData || undefined} onBackToEvaluation={handleBackToEvaluation} />
               </Box>
             ) : (
               <Box textAlign="center" py={8}>
