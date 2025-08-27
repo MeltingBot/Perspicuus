@@ -8,7 +8,9 @@
 
 **Perspicuus** est un outil d'aide à la décision pour l'évaluation des risques de **blanchiment de capitaux et financement du terrorisme (LCBFT)** destiné aux établissements financiers français.
 
-![Perspicuus Interface](https://via.placeholder.com/800x400/1e3a8a/ffffff?text=Perspicuus+-+Interface+d%27%C3%A9valuation+LCBFT)
+![Perspicuus Interface](https://via.placeholder.com/800x400/1e3a8a/ffffff?text=Perspicuus+-+Interface+d%27evaluation+LCBFT)
+
+🌐 **Application en ligne** : [https://perspicuus.eu](https://perspicuus.eu)
 
 ## 🎯 Objectifs
 
@@ -187,10 +189,10 @@ Ce projet est sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus
 
 <div align="center">
 
-**🛡️ Perspicuus** - *Clarté dans l'évaluation des risques LCBFT*
+**🛡️ Perspicuus** - *Clarté et Transparence dans l'évaluation des risques LCBFT*
 
 Développé avec ❤️ pour les professionnels de la conformité
 
-[🌐 Site Web](https://github.com/MeltingBot/Perspicuus) • [📖 Documentation](CLAUDE.md) • [🐛 Issues](https://github.com/MeltingBot/Perspicuus/issues)
+[🌐 Application](https://perspicuus.eu) • [📖 Documentation](CLAUDE.md) • [🐛 Issues](https://github.com/MeltingBot/Perspicuus/issues)
 
 </div>

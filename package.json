@@ -1,7 +1,7 @@
 {
   "name": "perspicuus-spa",
   "version": "0.1.0",
-  "homepage": "https://meltingbot.github.io/Perspicuus",
+  "homepage": "https://perspicuus.eu",
   "private": true,
   "dependencies": {
     "@emotion/react": "^11.14.0",
