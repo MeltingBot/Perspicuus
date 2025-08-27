@@ -1,0 +1,21 @@
+{
+  "files": {
+    "main.css": "/Perspicuus/static/css/main.e6c13ad2.css",
+    "main.js": "/Perspicuus/static/js/main.53c60493.js",
+    "static/js/239.c4f03ec9.chunk.js": "/Perspicuus/static/js/239.c4f03ec9.chunk.js",
+    "static/js/977.52c4888c.chunk.js": "/Perspicuus/static/js/977.52c4888c.chunk.js",
+    "static/js/455.a74db207.chunk.js": "/Perspicuus/static/js/455.a74db207.chunk.js",
+    "static/js/453.90e19c42.chunk.js": "/Perspicuus/static/js/453.90e19c42.chunk.js",
+    "index.html": "/Perspicuus/index.html",
+    "main.e6c13ad2.css.map": "/Perspicuus/static/css/main.e6c13ad2.css.map",
+    "main.53c60493.js.map": "/Perspicuus/static/js/main.53c60493.js.map",
+    "239.c4f03ec9.chunk.js.map": "/Perspicuus/static/js/239.c4f03ec9.chunk.js.map",
+    "977.52c4888c.chunk.js.map": "/Perspicuus/static/js/977.52c4888c.chunk.js.map",
+    "455.a74db207.chunk.js.map": "/Perspicuus/static/js/455.a74db207.chunk.js.map",
+    "453.90e19c42.chunk.js.map": "/Perspicuus/static/js/453.90e19c42.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e6c13ad2.css",
+    "static/js/main.53c60493.js"
+  ]
+}
