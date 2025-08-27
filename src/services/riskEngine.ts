@@ -119,6 +119,9 @@ export class LCBFTRiskEngine {
     } else if (transaction.mode_paiement === PaymentMethod.FRACTIONNE) {
       score += 3;
       justifications.push("Paiement fractionné (tentative de contournement)");
+    } else if (transaction.mode_paiement === PaymentMethod.CRYPTOMONNAIES) {
+      score += 2;
+      justifications.push("Transaction en cryptomonnaies (risque réglementaire et volatilité)");
     } else if (transaction.mode_paiement === PaymentMethod.VIREMENT_INTL) {
       score += 2;
       justifications.push("Virement international");
