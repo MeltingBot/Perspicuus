@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
@@ -42,7 +42,8 @@ import {
   Euro, 
   Person, 
   Security,
-  InfoOutlined
+  InfoOutlined,
+  CloudUpload
 } from '@mui/icons-material';
 import { 
   RiskAssessmentRequest, 
@@ -67,6 +68,8 @@ import { PPEInfo } from './PPEQuestionnaireStep';
 
 interface WizardEvaluationFormProps {
   onResults: (results: RiskAssessmentResult, formData: RiskAssessmentRequest) => void;
+  formData?: RiskAssessmentRequest;
+  assessmentResults?: RiskAssessmentResult;
 }
 
 
@@ -118,9 +121,9 @@ const getSteps = (isNPOClient: boolean, isTravelRuleClient: boolean, isWealthCli
   return baseSteps;
 };
 
-export const WizardEvaluationForm: React.FC<WizardEvaluationFormProps> = ({ onResults }) => {
+export const WizardEvaluationForm: React.FC<WizardEvaluationFormProps> = ({ onResults, formData: initialFormData, assessmentResults }) => {
   const [activeStep, setActiveStep] = useState(0);
-  const [formData, setFormData] = useState<RiskAssessmentRequest>({
+  const [formData, setFormData] = useState<RiskAssessmentRequest>(initialFormData || {
     client: {
       type_client: ClientType.PERSONNE_PHYSIQUE,
       pep: false,
@@ -189,6 +192,33 @@ export const WizardEvaluationForm: React.FC<WizardEvaluationFormProps> = ({ onRe
                           (formData.client.type_client === ClientType.PERSONNE_MORALE ? isWealthManagementClient(formData.client.code_naf) : manualWealthManagement));
   const isPEPClient = formData.client.pep;
   const steps = React.useMemo(() => getSteps(isNPOClient, isTravelRuleClient, isWealthClient, isPEPClient), [isNPOClient, isTravelRuleClient, isWealthClient, isPEPClient]);
+
+  // Synchroniser les données importées avec les états locaux
+  useEffect(() => {
+    if (initialFormData) {
+      setFormData(initialFormData);
+      
+      // Si un code NAF est présent, essayer de le récupérer pour l'affichage
+      if (initialFormData.client.code_naf) {
+        // Créer un objet ApeCode minimal pour l'affichage
+        // (la recherche complète se fera lors du rendu du composant ApeCodeSearch)
+        setSelectedApeCode({
+          code: initialFormData.client.code_naf,
+          libelle: `${initialFormData.client.code_naf} - Code importé`,
+          libelle_court: 'Code importé',
+          libelle_tres_court: 'Importé'
+        });
+      }
+      
+      // Réinitialiser les checkboxes manuelles selon les catégories
+      if (initialFormData.client.category === ClientCategory.TRANSFER_MONITORING) {
+        setManualTravelRule(true);
+      }
+      if (initialFormData.client.category === ClientCategory.WEALTH_MANAGEMENT) {
+        setManualWealthManagement(true);
+      }
+    }
+  }, [initialFormData]);
 
   const updateClient = (field: string, value: any) => {
     const newClient = { ...formData.client, [field]: value };
@@ -273,6 +303,58 @@ export const WizardEvaluationForm: React.FC<WizardEvaluationFormProps> = ({ onRe
     } catch (error) {
       setErrors(['Erreur lors de l\'évaluation du risque']);
     }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const jsonData = JSON.parse(e.target?.result as string);
+        
+        // Valider que c'est un export Perspicuus
+        if (jsonData.metadata?.application === "Perspicuus LCBFT" || jsonData.timestamp) {
+          // Import JSON complet
+          if (jsonData.evaluation_request && jsonData.risk_assessment_results) {
+            setFormData(jsonData.evaluation_request);
+            
+            // Notification de succès
+            alert("✅ Évaluation importée avec succès - Vous pouvez maintenant modifier les données ou lancer l'évaluation");
+          }
+          // Import JSON compact - ne peut pas pré-remplir le formulaire (données insuffisantes)
+          else if (jsonData.risk_level && jsonData.total_score) {
+            alert("ℹ️ Format compact détecté - Ces données ne peuvent pas pré-remplir le formulaire. Importez depuis l'onglet Résultats pour visualiser.");
+          }
+        } else {
+          alert("⚠️ Fichier JSON non reconnu. Veuillez importer un fichier exporté depuis Perspicuus.");
+        }
+      } catch (error) {
+        console.error("Erreur lors de l'import:", error);
+        alert("❌ Erreur lors de l'import du fichier JSON. Vérifiez le format du fichier.");
+      }
+    };
+    
+    reader.readAsText(file);
+    
+    // Reset input pour permettre le re-upload du même fichier
+    event.target.value = '';
+  };
+
+  const triggerFileUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      const mockEvent = {
+        target,
+        currentTarget: target
+      } as React.ChangeEvent<HTMLInputElement>;
+      handleFileUpload(mockEvent);
+    });
+    input.click();
   };
 
   const renderStepContent = (step: number) => {
@@ -718,16 +800,27 @@ export const WizardEvaluationForm: React.FC<WizardEvaluationFormProps> = ({ onRe
     >
       <Card elevation={3} sx={{ maxWidth: 800, margin: 'auto' }}>
         <CardContent>
-          <Box display="flex" alignItems="center" mb={4}>
-            <AssessmentOutlined sx={{ mr: 2, color: 'primary.main', fontSize: 40 }} />
-            <Box>
-              <Typography variant="h4" component="h2" fontWeight="bold">
-                Évaluation LCBFT
-              </Typography>
-              <Typography variant="subtitle1" color="textSecondary">
-                Assistant d'évaluation des risques
-              </Typography>
+          <Box display="flex" alignItems="center" justifyContent="space-between" mb={4}>
+            <Box display="flex" alignItems="center">
+              <AssessmentOutlined sx={{ mr: 2, color: 'primary.main', fontSize: 40 }} />
+              <Box>
+                <Typography variant="h4" component="h2" fontWeight="bold">
+                  Évaluation LCBFT
+                </Typography>
+                <Typography variant="subtitle1" color="textSecondary">
+                  Assistant d'évaluation des risques
+                </Typography>
+              </Box>
             </Box>
+            <Button
+              variant="outlined"
+              startIcon={<CloudUpload />}
+              onClick={triggerFileUpload}
+              size="small"
+              sx={{ borderRadius: 2 }}
+            >
+              Importer JSON
+            </Button>
           </Box>
 
           <Box mb={4}>

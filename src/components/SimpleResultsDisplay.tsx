@@ -101,19 +101,19 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
           risk_level: results.niveau_risque,
           risk_level_fr: getRiskLabelFr(results.niveau_risque),
           total_score: results.score_total,
-          max_possible_score: 20
+          scoring_system: "open_scoring"
         },
         geographic_risk: {
-          score: results.score_geo.score,
-          justifications: results.score_geo.justifications
+          score: results.score_geo?.score || 0,
+          justifications: results.score_geo?.justifications || []
         },
         product_service_risk: {
-          score: results.score_produit.score,
-          justifications: results.score_produit.justifications
+          score: results.score_produit?.score || 0,
+          justifications: results.score_produit?.justifications || []
         },
         client_risk: {
-          score: results.score_client.score,
-          justifications: results.score_client.justifications
+          score: results.score_client?.score || 0,
+          justifications: results.score_client?.justifications || []
         },
         recommendations: results.recommandations.map(rec => 
           rec.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
@@ -136,14 +136,14 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
       risk_level: results.niveau_risque,
       total_score: results.score_total,
       scores: {
-        geographic: results.score_geo.score,
-        product_service: results.score_produit.score,
-        client: results.score_client.score
+        geographic: results.score_geo?.score || 0,
+        product_service: results.score_produit?.score || 0,
+        client: results.score_client?.score || 0
       },
       key_factors: [
-        ...results.score_geo.justifications,
-        ...results.score_produit.justifications,
-        ...results.score_client.justifications
+        ...(results.score_geo?.justifications || []),
+        ...(results.score_produit?.justifications || []),
+        ...(results.score_client?.justifications || [])
       ]
     };
     
@@ -160,20 +160,25 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
   const radarData = [
     {
       category: 'Risque Géographique',
-      score: results.score_geo.score,
-      maxScore: 10
+      score: results.score_geo?.score || 0
     },
     {
       category: 'Risque Produit/Service',
-      score: results.score_produit.score,
-      maxScore: 10
+      score: results.score_produit?.score || 0
     },
     {
       category: 'Risque Client',
-      score: results.score_client.score,
-      maxScore: 10
+      score: results.score_client?.score || 0
     }
   ];
+
+  // Calcul du max pour le graphique radar (avec une marge)
+  const maxRadarScore = Math.max(
+    results.score_geo?.score || 0,
+    results.score_produit?.score || 0,
+    results.score_client?.score || 0,
+    5 // Minimum pour avoir une échelle visible
+  ) + 2;
 
 
   return (
@@ -226,7 +231,7 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
               {results.score_total}
             </Typography>
             <Typography variant="body2" color="textSecondary">
-              / 30+ points
+              points (scoring ouvert)
             </Typography>
           </CardContent>
         </Card>
@@ -266,7 +271,7 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
                   <Typography variant="body1">Géographique</Typography>
                 </Box>
                 <Typography variant="h6" color={color} fontWeight="bold">
-                  {results.score_geo.score}/10
+                  {results.score_geo?.score || 0}
                 </Typography>
               </Box>
               <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -275,7 +280,7 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
                   <Typography variant="body1">Produit/Service</Typography>
                 </Box>
                 <Typography variant="h6" color={color} fontWeight="bold">
-                  {results.score_produit.score}/10
+                  {results.score_produit?.score || 0}
                 </Typography>
               </Box>
               <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -284,7 +289,7 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
                   <Typography variant="body1">Client</Typography>
                 </Box>
                 <Typography variant="h6" color={color} fontWeight="bold">
-                  {results.score_client.score}/10
+                  {results.score_client.score}
                 </Typography>
               </Box>
             </Stack>
@@ -303,7 +308,7 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
               <RadarChart data={radarData} margin={{ top: 40, right: 80, bottom: 40, left: 80 }}>
                 <PolarGrid />
                 <PolarAngleAxis dataKey="category" className="radar-label" />
-                <PolarRadiusAxis domain={[0, 10]} tick={false} />
+                <PolarRadiusAxis domain={[0, maxRadarScore]} tick={false} />
                 <Radar
                   name="Score"
                   dataKey="score"
@@ -325,9 +330,9 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
             <Typography variant="h6" gutterBottom>
               🌍 Risques Géographiques
             </Typography>
-            {results.score_geo.justifications.length > 0 ? (
+            {(results.score_geo?.justifications || []).length > 0 ? (
               <List dense>
-                {results.score_geo.justifications.map((justif, index) => (
+                {(results.score_geo?.justifications || []).map((justif, index) => (
                   <ListItem key={index}>
                     <ListItemIcon>
                       <LocationOn color="primary" />
@@ -349,9 +354,9 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
             <Typography variant="h6" gutterBottom>
               💼 Risques Produit/Service
             </Typography>
-            {results.score_produit.justifications.length > 0 ? (
+            {(results.score_produit?.justifications || []).length > 0 ? (
               <List dense>
-                {results.score_produit.justifications.map((justif, index) => (
+                {(results.score_produit?.justifications || []).map((justif, index) => (
                   <ListItem key={index}>
                     <ListItemIcon>
                       <Business color="primary" />
@@ -373,9 +378,9 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
             <Typography variant="h6" gutterBottom>
               👤 Risques Client
             </Typography>
-            {results.score_client.justifications.length > 0 ? (
+            {(results.score_client?.justifications || []).length > 0 ? (
               <List dense>
-                {results.score_client.justifications.map((justif, index) => (
+                {(results.score_client?.justifications || []).map((justif, index) => (
                   <ListItem key={index}>
                     <ListItemIcon>
                       <Person color="primary" />

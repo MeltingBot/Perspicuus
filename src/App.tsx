@@ -11,7 +11,8 @@ import {
   Tabs,
   Tab,
   Paper,
-  Button
+  Button,
+  Stack
 } from '@mui/material';
 import {
   Security,
@@ -20,7 +21,8 @@ import {
   Analytics,
   GetApp,
   Refresh,
-  Info
+  Info,
+  CloudUpload
 } from '@mui/icons-material';
 import { WizardEvaluationForm } from './components/WizardEvaluationForm';
 import { SimpleResultsDisplay } from './components/SimpleResultsDisplay';
@@ -123,6 +125,102 @@ function App() {
     }
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const jsonData = JSON.parse(e.target?.result as string);
+        
+        // Valider que c'est un export Perspicuus
+        if (jsonData.metadata?.application === "Perspicuus LCBFT" || jsonData.timestamp) {
+          // Import JSON complet
+          if (jsonData.evaluation_request && jsonData.risk_assessment_results) {
+            setCurrentFormData(jsonData.evaluation_request);
+            setAssessmentResults(jsonData.risk_assessment_results);
+            setCurrentTab(1); // Aller aux résultats
+            
+            // Notification de succès (optionnelle)
+            console.log("✅ Évaluation importée avec succès (format complet)");
+          }
+          // Import JSON compact - reconstruction des données minimales
+          else if (jsonData.risk_level && jsonData.total_score) {
+            // Créer un objet RiskAssessmentResult basique depuis le format compact
+            const reconstructedResults: RiskAssessmentResult = {
+              niveau_risque: jsonData.risk_level,
+              score_total: jsonData.total_score,
+              score_geo: { 
+                score: jsonData.scores?.geographic || 0, 
+                justifications: jsonData.key_factors?.filter((f: string) => 
+                  f.toLowerCase().includes('géographique') || 
+                  f.toLowerCase().includes('pays') ||
+                  f.toLowerCase().includes('distance') ||
+                  f.toLowerCase().includes('frontière')
+                ) || []
+              },
+              score_produit: { 
+                score: jsonData.scores?.product_service || 0, 
+                justifications: jsonData.key_factors?.filter((f: string) => 
+                  f.toLowerCase().includes('transaction') || 
+                  f.toLowerCase().includes('paiement') || 
+                  f.toLowerCase().includes('montant') ||
+                  f.toLowerCase().includes('cryptomonnaies') ||
+                  f.toLowerCase().includes('espèces') ||
+                  f.toLowerCase().includes('secteur')
+                ) || []
+              },
+              score_client: { 
+                score: jsonData.scores?.client || 0, 
+                justifications: jsonData.key_factors?.filter((f: string) => 
+                  f.toLowerCase().includes('client') || 
+                  f.toLowerCase().includes('pep') || 
+                  f.toLowerCase().includes('sanction') ||
+                  f.toLowerCase().includes('âge') ||
+                  f.toLowerCase().includes('notoriété') ||
+                  f.toLowerCase().includes('réticence')
+                ) || []
+              },
+              recommandations: ["Évaluation importée depuis un format compact - recommandations détaillées non disponibles"]
+            };
+            
+            setAssessmentResults(reconstructedResults);
+            setCurrentFormData(null); // Pas de données de formulaire dans le format compact
+            setCurrentTab(1);
+            
+            console.log("✅ Évaluation importée avec succès (format compact)");
+          }
+        } else {
+          alert("⚠️ Fichier JSON non reconnu. Veuillez importer un fichier exporté depuis Perspicuus.");
+        }
+      } catch (error) {
+        console.error("Erreur lors de l'import:", error);
+        alert("❌ Erreur lors de l'import du fichier JSON. Vérifiez le format du fichier.");
+      }
+    };
+    
+    reader.readAsText(file);
+    
+    // Reset input pour permettre le re-upload du même fichier
+    event.target.value = '';
+  };
+
+  const triggerFileUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      const mockEvent = {
+        target,
+        currentTarget: target
+      } as React.ChangeEvent<HTMLInputElement>;
+      handleFileUpload(mockEvent);
+    });
+    input.click();
+  };
+
   const startNewEvaluation = () => {
     setAssessmentResults(null);
     setCurrentFormData(null);
@@ -185,22 +283,36 @@ function App() {
         <Container maxWidth="lg">
           {/* Tab 0: Évaluation */}
           <TabPanel value={currentTab} index={0}>
-            <WizardEvaluationForm onResults={handleResults} />
+            <WizardEvaluationForm 
+              onResults={handleResults} 
+              formData={currentFormData || undefined}
+              assessmentResults={assessmentResults || undefined}
+            />
           </TabPanel>
 
           {/* Tab 1: Résultats */}
           <TabPanel value={currentTab} index={1}>
             {assessmentResults ? (
               <Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<Refresh />}
-                    onClick={startNewEvaluation}
-                    sx={{ borderRadius: 2 }}
-                  >
-                    Nouvelle évaluation
-                  </Button>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} flexWrap="wrap" gap={1}>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<Refresh />}
+                      onClick={startNewEvaluation}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      Nouvelle évaluation
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      startIcon={<CloudUpload />}
+                      onClick={triggerFileUpload}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      Importer JSON
+                    </Button>
+                  </Stack>
                   <Button
                     variant="contained"
                     startIcon={<GetApp />}
@@ -215,12 +327,30 @@ function App() {
             ) : (
               <Box textAlign="center" py={8}>
                 <Assessment sx={{ fontSize: 80, color: 'text.secondary', mb: 2 }} />
-                <Typography variant="h5" color="textSecondary">
+                <Typography variant="h5" color="textSecondary" gutterBottom>
                   Aucune évaluation disponible
                 </Typography>
-                <Typography variant="body1" color="textSecondary" sx={{ mt: 1 }}>
-                  Veuillez d'abord effectuer une évaluation de risque dans le premier onglet.
+                <Typography variant="body1" color="textSecondary" sx={{ mb: 3 }}>
+                  Effectuez une nouvelle évaluation ou importez une évaluation existante.
                 </Typography>
+                <Stack direction="row" spacing={2} justifyContent="center">
+                  <Button
+                    variant="contained"
+                    startIcon={<Assessment />}
+                    onClick={() => setCurrentTab(0)}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Nouvelle évaluation
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<CloudUpload />}
+                    onClick={triggerFileUpload}
+                    sx={{ borderRadius: 2 }}
+                  >
+                    Importer JSON
+                  </Button>
+                </Stack>
               </Box>
             )}
           </TabPanel>
