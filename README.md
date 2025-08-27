@@ -28,7 +28,7 @@
 - **Risques produits/services** : Montants, modes de paiement, complexité
 
 ### 📊 **Scoring Automatisé**
-- Algorithme de notation sur 20+ points
+- Système de scoring ouvert (non limité) avec points additifs
 - Classification en 4 niveaux : Faible, Modéré, Élevé, Très Élevé
 - Justifications détaillées pour chaque facteur de risque
 
@@ -38,10 +38,11 @@
 - **Gestion de Fortune** : Analyse des services de wealth management
 - **ONG** : Évaluation spécifique des organismes à but non lucratif
 
-### 📄 **Rapports Professionnels**
+### 📄 **Export et Rapports**
 - Génération PDF automatique avec mise en page soignée
+- Export JSON (format complet et compact) pour intégration système
+- Import/export bidirectionnel des évaluations
 - Synthèse exécutive, analyse détaillée, recommandations
-- Mentions légales et limitations d'utilisation incluses
 - Conforme aux standards de documentation TRACFIN
 
 ### 🚀 **Interface Moderne**
@@ -161,23 +162,11 @@ Les contributions sont les bienvenues ! Pour contribuer :
 - **Prettier** pour le formatage
 - Tests avec **Jest** et **React Testing Library**
 
-## 📋 Roadmap
-
-### Version 1.1 (Prochaine)
-- [ ] Export Excel des évaluations
-- [ ] Historique et suivi des dossiers clients
-- [ ] API REST pour intégration SI
-- [ ] Tableaux de bord et statistiques
-
-### Version 1.2 (Moyen terme)
-- [ ] Module sanctions temps réel
-- [ ] Connecteur bases de données PEP
-- [ ] Notifications et alertes automatiques
-- [ ] Multi-devises et seuils personnalisables
 
 ## 📞 Support
 
-- **Documentation** : Consultez le fichier `CLAUDE.md` pour les détails techniques
+- **Documentation technique** : Consultez le fichier `CLAUDE.md` pour les détails de développement
+- **Format JSON** : Voir `DOCUMENTATION_JSON.md` pour l'import/export et l'intégration
 - **Issues** : [GitHub Issues](https://github.com/MeltingBot/Perspicuus/issues)
 - **Discussions** : [GitHub Discussions](https://github.com/MeltingBot/Perspicuus/discussions)
 
@@ -193,6 +182,6 @@ Ce projet est sous licence **MIT**. Voir le fichier [LICENSE](LICENSE) pour plus
 
 Développé avec ❤️ pour les professionnels de la conformité
 
-[🌐 Application](https://perspicuus.eu) • [📖 Documentation](CLAUDE.md) • [🐛 Issues](https://github.com/MeltingBot/Perspicuus/issues)
+[🌐 Application](https://perspicuus.eu) • [📖 Documentation](CLAUDE.md) • [📝 Format JSON](DOCUMENTATION_JSON.md) • [🐛 Issues](https://github.com/MeltingBot/Perspicuus/issues)
 
 </div>
