@@ -60,6 +60,7 @@ export class PDFGenerator {
     this.addFormData(formData);
     this.addDetailedAnalysis(results);
     this.addRecommendations(results);
+    this.addLegalDisclaimer();
     this.addFooter();
     
     // Téléchargement automatique
@@ -70,31 +71,46 @@ export class PDFGenerator {
   private addHeader(): void {
     const pageWidth = this.pdf.internal.pageSize.width;
     
-    // En-tête avec logo/titre
+    // En-tête avec dégradé visuel amélioré
     this.pdf.setFillColor(30, 60, 114); // Couleur primaire
-    this.pdf.rect(0, 0, pageWidth, 40, 'F');
+    this.pdf.rect(0, 0, pageWidth, 45, 'F');
+    
+    // Bande décorative
+    this.pdf.setFillColor(63, 81, 181);
+    this.pdf.rect(0, 35, pageWidth, 10, 'F');
     
     this.pdf.setTextColor(255, 255, 255);
-    this.pdf.setFontSize(20);
-    this.addCleanText('RAPPORT D\'EVALUATION LCBFT', pageWidth / 2, 15, { align: 'center' });
+    this.pdf.setFontSize(22);
+    this.pdf.setFont('helvetica', 'bold');
+    this.addCleanText('RAPPORT D\'ÉVALUATION LCBFT', pageWidth / 2, 16, { align: 'center' });
     
-    this.pdf.setFontSize(12);
-    this.addCleanText('Perspicuus - Outil d\'evaluation des risques de blanchiment', pageWidth / 2, 25, { align: 'center' });
+    this.pdf.setFontSize(11);
+    this.pdf.setFont('helvetica', 'normal');
+    this.addCleanText('Perspicuus - Aide à l\'évaluation des risques de blanchiment de capitaux', pageWidth / 2, 26, { align: 'center' });
     
-    this.pdf.setFontSize(10);
-    this.addCleanText(`Genere le ${new Date().toLocaleDateString('fr-FR')} a ${new Date().toLocaleTimeString('fr-FR')}`, pageWidth / 2, 35, { align: 'center' });
+    this.pdf.setFontSize(9);
+    const now = new Date();
+    this.addCleanText(`Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}`, pageWidth / 2, 38, { align: 'center' });
     
     this.pdf.setTextColor(0, 0, 0);
   }
 
   private addSummary(results: RiskAssessmentResult): void {
-    let yPos = 55;
+    let yPos = 60;
     
     // Titre de section
     this.pdf.setFontSize(16);
     this.pdf.setFont('helvetica', 'bold');
+    this.pdf.setTextColor(30, 60, 114);
     this.pdf.text('RÉSUMÉ EXÉCUTIF', 20, yPos);
-    yPos += 15;
+    this.pdf.setTextColor(0, 0, 0);
+    
+    // Ligne décorative sous le titre (après le texte)
+    this.pdf.setDrawColor(30, 60, 114);
+    this.pdf.setLineWidth(1.5);
+    this.pdf.line(20, yPos + 3, 80, yPos + 3);
+    
+    yPos += 18;
     
     // Score et niveau de risque
     this.pdf.setFontSize(12);
@@ -138,8 +154,16 @@ export class PDFGenerator {
     
     this.pdf.setFontSize(16);
     this.pdf.setFont('helvetica', 'bold');
+    this.pdf.setTextColor(30, 60, 114);
     this.pdf.text('DONNÉES D\'ÉVALUATION', 20, yPos);
-    yPos += 15;
+    
+    // Ligne décorative sous le titre
+    this.pdf.setDrawColor(30, 60, 114);
+    this.pdf.setLineWidth(1.5);
+    this.pdf.line(20, yPos + 3, 90, yPos + 3);
+    
+    this.pdf.setTextColor(0, 0, 0);
+    yPos += 18;
     
     this.pdf.setFontSize(12);
     this.pdf.setFont('helvetica', 'normal');
@@ -218,8 +242,16 @@ export class PDFGenerator {
     
     this.pdf.setFontSize(16);
     this.pdf.setFont('helvetica', 'bold');
+    this.pdf.setTextColor(30, 60, 114);
     this.pdf.text('ANALYSE DÉTAILLÉE DES RISQUES', 20, yPos);
-    yPos += 15;
+    
+    // Ligne décorative sous le titre
+    this.pdf.setDrawColor(30, 60, 114);
+    this.pdf.setLineWidth(1.5);
+    this.pdf.line(20, yPos + 3, 120, yPos + 3);
+    
+    this.pdf.setTextColor(0, 0, 0);
+    yPos += 18;
     
     // Risques géographiques
     this.pdf.setFontSize(14);
@@ -287,8 +319,16 @@ export class PDFGenerator {
     
     this.pdf.setFontSize(16);
     this.pdf.setFont('helvetica', 'bold');
+    this.pdf.setTextColor(30, 60, 114);
     this.pdf.text('RECOMMANDATIONS ET MESURES', 20, yPos);
-    yPos += 15;
+    
+    // Ligne décorative sous le titre
+    this.pdf.setDrawColor(30, 60, 114);
+    this.pdf.setLineWidth(1.5);
+    this.pdf.line(20, yPos + 3, 110, yPos + 3);
+    
+    this.pdf.setTextColor(0, 0, 0);
+    yPos += 18;
     
     // Encadré coloré selon le niveau de risque
     const riskColor = this.getRiskColor(results.niveau_risque);
@@ -323,6 +363,115 @@ export class PDFGenerator {
     });
   }
 
+  private addLegalDisclaimer(): void {
+    this.pdf.addPage();
+    let yPos = 20;
+    const pageWidth = this.pdf.internal.pageSize.width;
+    
+    // Titre de la section
+    this.pdf.setFontSize(16);
+    this.pdf.setFont('helvetica', 'bold');
+    this.pdf.setTextColor(30, 60, 114);
+    this.pdf.text('MENTIONS LÉGALES ET LIMITATIONS', 20, yPos);
+    
+    // Ligne décorative sous le titre
+    this.pdf.setDrawColor(30, 60, 114);
+    this.pdf.setLineWidth(1.5);
+    this.pdf.line(20, yPos + 3, 125, yPos + 3);
+    
+    this.pdf.setTextColor(0, 0, 0);
+    yPos += 22;
+    
+    // Encadré d'avertissement
+    this.pdf.setFillColor(255, 243, 224); // Couleur orange claire
+    this.pdf.setDrawColor(255, 193, 7); // Bordure orange
+    this.pdf.rect(15, yPos - 10, pageWidth - 30, 60, 'FD');
+    
+    this.pdf.setFontSize(12);
+    this.pdf.setFont('helvetica', 'bold');
+    this.pdf.setTextColor(230, 81, 0); // Orange foncé
+    this.pdf.text('AVERTISSEMENT IMPORTANT', 20, yPos);
+    yPos += 15;
+    
+    this.pdf.setFont('helvetica', 'normal');
+    this.pdf.setTextColor(0, 0, 0);
+    this.pdf.setFontSize(10);
+    
+    const disclaimerText = [
+      "Cette analyse de risque LCBFT constitue un outil d'aide à la décision et ne",
+      "saurait se substituer au jugement professionnel de l'établissement financier.",
+      "Les résultats présentés ne constituent pas un engagement de conformité",
+      "réglementaire ni une garantie d'absence de risque de blanchiment."
+    ];
+    
+    disclaimerText.forEach(line => {
+      this.pdf.text(line, 20, yPos);
+      yPos += 6;
+    });
+    
+    yPos += 15;
+    
+    // Section des limites d'utilisation
+    this.pdf.setFontSize(11);
+    this.pdf.setFont('helvetica', 'bold');
+    this.pdf.text('LIMITES D\'UTILISATION :', 20, yPos);
+    yPos += 10;
+    
+    this.pdf.setFont('helvetica', 'normal');
+    this.pdf.setFontSize(10);
+    
+    const limitations = [
+      "• L'évaluation est basée exclusivement sur les données fournies lors de l'analyse",
+      "• Les informations doivent être régulièrement mises à jour selon l'évolution du profil client",
+      "• Cette analyse ne dispense pas des obligations de vigilance et de déclaration TRACFIN",
+      "• L'établissement reste responsable de ses décisions d'acceptation ou de refus de clientèle",
+      "• Les seuils et critères appliqués peuvent nécessiter des ajustements selon le contexte"
+    ];
+    
+    limitations.forEach(limitation => {
+      const lines = this.pdf.splitTextToSize(limitation, 170);
+      this.pdf.text(lines, 20, yPos);
+      yPos += lines.length * 6 + 2;
+    });
+    
+    yPos += 10;
+    
+    // Section responsabilité professionnelle
+    this.pdf.setFont('helvetica', 'bold');
+    this.pdf.text('RESPONSABILITÉ PROFESSIONNELLE :', 20, yPos);
+    yPos += 10;
+    
+    this.pdf.setFont('helvetica', 'normal');
+    const responsabilityText = [
+      "L'utilisateur demeure seul responsable de l'interprétation des résultats et des",
+      "décisions prises en conséquence. En cas de doute sur l'évaluation d'un dossier,",
+      "il convient de solliciter l'avis du responsable conformité ou du correspondant",
+      "TRACFIN de l'établissement."
+    ];
+    
+    responsabilityText.forEach(line => {
+      this.pdf.text(line, 20, yPos);
+      yPos += 6;
+    });
+    
+    yPos += 15;
+    
+    // Conformité réglementaire
+    this.pdf.setFillColor(240, 248, 255); // Bleu très clair
+    this.pdf.setDrawColor(33, 150, 243); // Bordure bleue
+    this.pdf.rect(15, yPos - 5, pageWidth - 30, 25, 'FD');
+    
+    this.pdf.setFont('helvetica', 'bold');
+    this.pdf.setFontSize(10);
+    this.pdf.text('RÉFÉRENCES RÉGLEMENTAIRES', 20, yPos + 5);
+    yPos += 12;
+    
+    this.pdf.setFont('helvetica', 'normal');
+    this.pdf.text('Basé sur les recommandations FATF/GAFI, directives européennes et Code monétaire', 20, yPos);
+    yPos += 6;
+    this.pdf.text('et financier français - Articles L561-1 et suivants', 20, yPos);
+  }
+
   private addFooter(): void {
     const pageCount = this.pdf.internal.pages.length - 1;
     
@@ -331,16 +480,22 @@ export class PDFGenerator {
       const pageWidth = this.pdf.internal.pageSize.width;
       const pageHeight = this.pdf.internal.pageSize.height;
       
-      // Ligne de séparation
-      this.pdf.setDrawColor(200, 200, 200);
-      this.pdf.line(20, pageHeight - 20, pageWidth - 20, pageHeight - 20);
+      // Ligne de séparation plus fine
+      this.pdf.setDrawColor(220, 220, 220);
+      this.pdf.setLineWidth(0.5);
+      this.pdf.line(20, pageHeight - 25, pageWidth - 20, pageHeight - 25);
       
-      // Informations de pied de page
+      // Informations de pied de page avec meilleure mise en page
       this.pdf.setFontSize(8);
+      this.pdf.setTextColor(120, 120, 120);
+      this.pdf.text('Perspicuus LCBFT - Document confidentiel', 20, pageHeight - 15);
+      this.pdf.text(`Page ${i}/${pageCount}`, pageWidth - 20, pageHeight - 15, { align: 'right' });
+      this.pdf.text(`Généré le ${new Date().toLocaleDateString('fr-FR')} - Version 1.0`, pageWidth / 2, pageHeight - 15, { align: 'center' });
+      
+      // Mention légale en bas de page
+      this.pdf.setFontSize(7);
       this.pdf.setTextColor(100, 100, 100);
-      this.pdf.text('Perspicuus LCBFT - Confidentiel', 20, pageHeight - 10);
-      this.pdf.text(`Page ${i} sur ${pageCount}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
-      this.pdf.text('Conforme aux standards GAFI/FATF et réglementation française', pageWidth / 2, pageHeight - 10, { align: 'center' });
+      this.pdf.text('Outil d\'aide à la décision - Ne constitue pas une validation de conformité réglementaire', pageWidth / 2, pageHeight - 8, { align: 'center' });
     }
   }
 

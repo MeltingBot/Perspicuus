@@ -9,36 +9,36 @@ import {
   MenuItem,
   Card,
   CardContent,
-  Alert,
   FormControlLabel,
   Switch,
   Autocomplete,
-  Chip,
   Stack
 } from '@mui/material';
-import { PPECategory, PPEFunctionType, PPE_FUNCTION_RISK_LEVELS } from '../data/ppeRiskData';
+import { PPECategory, PPEFunctionType } from '../data/ppeRiskData';
 import { COUNTRIES_LIST } from '../data/riskData';
-import { RiskLevel } from '../types/lcbft';
 
 export interface PPEInfo {
-  is_ppe: boolean;
   category: PPECategory;
   function_type: PPEFunctionType;
   pays_fonction: string;
   is_current_function: boolean;
-  function_end_date?: string;
-  wealth_sources: string[];
+  patrimoine_important: boolean;
+  activites_complexes: boolean;
+  exposition_mediatique: boolean;
+  reseaux_internationaux: boolean;
   family_members_ppe: boolean;
   close_associates_ppe: boolean;
 }
 
 const defaultPPEInfo: PPEInfo = {
-  is_ppe: false,
   category: PPECategory.PPE_NATIONALE,
   function_type: PPEFunctionType.AUTRE_FONCTION_PUBLIQUE_IMPORTANTE,
   pays_fonction: 'France',
   is_current_function: true,
-  wealth_sources: [],
+  patrimoine_important: false,
+  activites_complexes: false,
+  exposition_mediatique: false,
+  reseaux_internationaux: false,
   family_members_ppe: false,
   close_associates_ppe: false
 };
@@ -61,61 +61,19 @@ const PPEQuestionnaireStep: React.FC<PPEQuestionnaireStepProps> = ({
     });
   };
 
-  const getRiskLevel = (functionType: PPEFunctionType): RiskLevel => {
-    return PPE_FUNCTION_RISK_LEVELS[functionType] || RiskLevel.MODERE;
-  };
-
-  const getCurrentRiskLevel = () => {
-    if (!safePPEInfo.is_ppe) return RiskLevel.FAIBLE;
-    return getRiskLevel(safePPEInfo.function_type);
-  };
-
-  const riskLevel = getCurrentRiskLevel();
-  const riskColors = {
-    [RiskLevel.FAIBLE]: 'success',
-    [RiskLevel.MODERE]: 'warning', 
-    [RiskLevel.ELEVE]: 'error',
-    [RiskLevel.TRES_ELEVE]: 'error'
-  } as const;
 
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h5" gutterBottom>
         Évaluation Personne Politiquement Exposée (PPE)
       </Typography>
-      
-      <Alert severity="info" sx={{ mb: 3 }}>
-        Cette évaluation permet d'identifier les risques liés aux Personnes Politiquement Exposées selon la directive (UE) 2015/849.
-      </Alert>
 
       <Stack spacing={3}>
-        <Card>
-          <CardContent>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={safePPEInfo.is_ppe}
-                  onChange={(e) => updatePPEInfo('is_ppe', e.target.checked)}
-                />
-              }
-              label="Le client est-il une Personne Politiquement Exposée (PPE) ?"
-            />
-          </CardContent>
-        </Card>
-
-        {safePPEInfo.is_ppe && (
-          <>
             <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
               <Card sx={{ flex: 1 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Classification PPE
-                    <Chip 
-                      label={riskLevel}
-                      color={riskColors[riskLevel]}
-                      size="small"
-                      sx={{ ml: 2 }}
-                    />
                   </Typography>
                   
                   <FormControl fullWidth margin="normal">
@@ -143,12 +101,6 @@ const PPEQuestionnaireStep: React.FC<PPEQuestionnaireStepProps> = ({
                       {Object.values(PPEFunctionType).map((functionType) => (
                         <MenuItem key={functionType} value={functionType}>
                           {functionType}
-                          <Chip 
-                            label={getRiskLevel(functionType)}
-                            color={riskColors[getRiskLevel(functionType)]}
-                            size="small"
-                            sx={{ ml: 1 }}
-                          />
                         </MenuItem>
                       ))}
                     </Select>
@@ -186,27 +138,49 @@ const PPEQuestionnaireStep: React.FC<PPEQuestionnaireStepProps> = ({
                     label="Fonction actuellement exercée"
                   />
 
-                  {!safePPEInfo.is_current_function && (
-                    <TextField
-                      fullWidth
-                      margin="normal"
-                      label="Date de fin de fonction"
-                      type="date"
-                      value={safePPEInfo.function_end_date || ''}
-                      onChange={(e) => updatePPEInfo('function_end_date', e.target.value)}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  )}
 
-                  <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Sources de richesse (déclaration)"
-                    multiline
-                    rows={3}
-                    value={safePPEInfo.wealth_sources.join('\n')}
-                    onChange={(e) => updatePPEInfo('wealth_sources', e.target.value.split('\n').filter(s => s.trim()))}
-                    placeholder="Ex: Salaire fonction publique, héritages, revenus immobiliers..."
+                  <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+                    Éléments supplémentaires
+                  </Typography>
+                  
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={safePPEInfo.patrimoine_important}
+                        onChange={(e) => updatePPEInfo('patrimoine_important', e.target.checked)}
+                      />
+                    }
+                    label="Patrimoine important par rapport aux revenus déclarés"
+                  />
+                  
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={safePPEInfo.activites_complexes}
+                        onChange={(e) => updatePPEInfo('activites_complexes', e.target.checked)}
+                      />
+                    }
+                    label="Activités commerciales ou montages juridiques complexes"
+                  />
+                  
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={safePPEInfo.exposition_mediatique}
+                        onChange={(e) => updatePPEInfo('exposition_mediatique', e.target.checked)}
+                      />
+                    }
+                    label="Forte exposition médiatique"
+                  />
+                  
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={safePPEInfo.reseaux_internationaux}
+                        onChange={(e) => updatePPEInfo('reseaux_internationaux', e.target.checked)}
+                      />
+                    }
+                    label="Réseaux d'affaires internationaux étendus"
                   />
                 </CardContent>
               </Card>
@@ -245,8 +219,6 @@ const PPEQuestionnaireStep: React.FC<PPEQuestionnaireStepProps> = ({
                 </Box>
               </CardContent>
             </Card>
-          </>
-        )}
       </Stack>
     </Box>
   );
