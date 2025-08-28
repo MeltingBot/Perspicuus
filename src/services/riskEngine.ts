@@ -78,9 +78,93 @@ export class LCBFTRiskEngine {
   }
 
   /**
+   * Évaluation des risques spécifiques Wealth Management
+   */
+  static evaluerRisqueWealthManagement(wealthInfo: any): RiskScore {
+    let score = 0;
+    const justifications: string[] = [];
+    
+    if (!wealthInfo) return { score, justifications };
+    
+    // Risque lié aux véhicules d'investissement
+    if (wealthInfo.investment_vehicles?.includes('FONDS_HEDGE')) {
+      score += 3;
+      justifications.push("Investissement en fonds spéculatifs (hedge funds)");
+    }
+    if (wealthInfo.investment_vehicles?.includes('PRIVATE_EQUITY')) {
+      score += 2;
+      justifications.push("Investissement en capital investissement (private equity)");
+    }
+    if (wealthInfo.investment_vehicles?.includes('CRYPTOACTIFS')) {
+      score += 4;
+      justifications.push("Exposition aux cryptoactifs - risque réglementaire élevé");
+    }
+    if (wealthInfo.investment_vehicles?.includes('SOCIETES_HOLDINGS')) {
+      score += 2;
+      justifications.push("Utilisation de sociétés holdings - complexité structurelle");
+    }
+    if (wealthInfo.investment_vehicles?.includes('PRODUITS_STRUCTURES')) {
+      score += 2;
+      justifications.push("Produits structurés complexes");
+    }
+    
+    // Risque lié à l'origine des fonds
+    if (wealthInfo.wealth_sources?.includes('ORIGINE_INDETERMINEE')) {
+      score += 5;
+      justifications.push("Origine des fonds indéterminée - risque majeur");
+    }
+    if (wealthInfo.wealth_sources?.includes('GAINS_EXCEPTIONNELS')) {
+      score += 2;
+      justifications.push("Gains exceptionnels nécessitant justification approfondie");
+    }
+    
+    // Risque lié au segment client et montants
+    if (wealthInfo.client_segment === 'ULTRA_HAUTE_FORTUNE') {
+      score += 2;
+      justifications.push("Client ultra haute fortune - vigilance renforcée");
+    }
+    
+    if (wealthInfo.assets_under_management > 10000000) { // > 10M€
+      score += 3;
+      justifications.push("Montants sous gestion très élevés (>10M€)");
+    } else if (wealthInfo.assets_under_management > 5000000) { // > 5M€
+      score += 2;
+      justifications.push("Montants sous gestion élevés (>5M€)");
+    }
+    
+    // Risque lié à l'exposition géographique
+    const highRiskCountries = ['Suisse', 'Monaco', 'Luxembourg', 'Singapour', 'Hong Kong'];
+    const offshoreJurisdictions = ['Îles Caïmans', 'Jersey', 'Guernesey', 'Bahamas', 'Bermudes'];
+    
+    if (wealthInfo.geographic_exposure?.some((country: string) => offshoreJurisdictions.includes(country))) {
+      score += 4;
+      justifications.push("Exposition à des juridictions offshore à haut risque");
+    } else if (wealthInfo.geographic_exposure?.some((country: string) => highRiskCountries.includes(country))) {
+      score += 2;
+      justifications.push("Exposition à des centres financiers nécessitant vigilance");
+    }
+    
+    // Risque lié aux types de services
+    if (wealthInfo.service_types?.includes('STRUCTURATION_PATRIMOINE')) {
+      score += 2;
+      justifications.push("Services de structuration patrimoniale complexe");
+    }
+    if (wealthInfo.service_types?.includes('OPTIMISATION_FISCALE')) {
+      score += 2;
+      justifications.push("Services d'optimisation fiscale - attention aux montages");
+    }
+    if (wealthInfo.service_types?.includes('FAMILY_OFFICE')) {
+      score += 1;
+      justifications.push("Services de family office - surveillance renforcée");
+    }
+    
+    return { score, justifications };
+  }
+
+  /**
    * Évaluation du risque lié aux produits/services
    */
-  static evaluerRisqueProduit(client: ClientInfo, transaction: TransactionInfo): RiskScore {
+  static evaluerRisqueProduit(client: ClientInfo, transaction: TransactionInfo, wealthInfo?: any): RiskScore {
     let score = 0;
     const justifications: string[] = [];
     
@@ -131,6 +215,13 @@ export class LCBFTRiskEngine {
     if (transaction.complexite_montage) {
       score += 3;
       justifications.push("Montage juridique complexe (difficile d'identifier le bénéficiaire effectif)");
+    }
+    
+    // Intégration des risques Wealth Management
+    if (wealthInfo) {
+      const wealthRisk = this.evaluerRisqueWealthManagement(wealthInfo);
+      score += wealthRisk.score;
+      justifications.push(...wealthRisk.justifications);
     }
     
     return { score, justifications };
@@ -254,7 +345,7 @@ export class LCBFTRiskEngine {
    */
   static evaluate(request: RiskAssessmentRequest): RiskAssessmentResult {
     const scoreGeo = this.evaluerRisqueGeographique(request.geographic);
-    const scoreProduit = this.evaluerRisqueProduit(request.client, request.transaction);
+    const scoreProduit = this.evaluerRisqueProduit(request.client, request.transaction, request.wealthManagementInfo);
     const scoreClient = this.evaluerRisqueClient(request.client);
     
     const [niveauRisque, scoreTotal] = this.calculerRisqueFinal(

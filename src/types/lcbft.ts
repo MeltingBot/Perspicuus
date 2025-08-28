@@ -63,6 +63,11 @@ export interface RiskAssessmentRequest {
   client: ClientInfo;
   geographic: GeographicInfo;
   transaction: TransactionInfo;
+  // Données spécialisées optionnelles
+  wealthManagementInfo?: any; // WealthManagementInfo depuis WealthManagementStep
+  npoInfo?: any; // NPOInfo depuis NPOEvaluationStep  
+  travelRuleInfo?: any; // TravelRuleInfo depuis TravelRuleStep
+  ppeInfo?: any; // PPEInfo depuis PPEQuestionnaireStep
 }
 
 export interface RiskScore {

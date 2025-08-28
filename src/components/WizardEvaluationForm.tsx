@@ -298,8 +298,17 @@ export const WizardEvaluationForm: React.FC<WizardEvaluationFormProps> = ({ onRe
     setErrors([]);
     
     try {
-      const results = LCBFTRiskEngine.evaluate(formData);
-      onResults(results, formData);
+      // Préparer les données complètes avec les informations spécialisées
+      const completeFormData = {
+        ...formData,
+        wealthManagementInfo: isWealthClient ? wealthManagementInfo : undefined,
+        npoInfo: isNPOClient ? npoInfo : undefined,
+        travelRuleInfo: isTravelRuleClient ? travelRuleInfo : undefined,
+        ppeInfo: isPEPClient ? ppeInfo : undefined
+      };
+      
+      const results = LCBFTRiskEngine.evaluate(completeFormData);
+      onResults(results, completeFormData);
     } catch (error) {
       setErrors(['Erreur lors de l\'évaluation du risque']);
     }
