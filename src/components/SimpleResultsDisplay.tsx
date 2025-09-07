@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -43,51 +43,67 @@ interface SimpleResultsDisplayProps {
   onBackToEvaluation?: () => void;
 }
 
-export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ results, formData, onBackToEvaluation }) => {
-  const getRiskColor = (level: RiskLevel) => {
-    switch (level) {
-      case RiskLevel.FAIBLE: return { color: '#4caf50', bg: '#e8f5e8' };
-      case RiskLevel.MODERE: return { color: '#ff9800', bg: '#fff3e0' };
-      case RiskLevel.ELEVE: return { color: '#f44336', bg: '#ffebee' };
-      case RiskLevel.TRES_ELEVE: return { color: '#d32f2f', bg: '#ffcdd2' };
-      default: return { color: '#757575', bg: '#f5f5f5' };
-    }
-  };
+const SimpleResultsDisplayComponent: React.FC<SimpleResultsDisplayProps> = ({ results, formData, onBackToEvaluation }) => {
+  // Memoized risk color calculation
+  const riskColors = useMemo(() => {
+    const getRiskColor = (level: RiskLevel) => {
+      switch (level) {
+        case RiskLevel.FAIBLE: return { color: '#4caf50', bg: '#e8f5e8' };
+        case RiskLevel.MODERE: return { color: '#ff9800', bg: '#fff3e0' };
+        case RiskLevel.ELEVE: return { color: '#f44336', bg: '#ffebee' };
+        case RiskLevel.TRES_ELEVE: return { color: '#d32f2f', bg: '#ffcdd2' };
+        default: return { color: '#757575', bg: '#f5f5f5' };
+      }
+    };
+    return getRiskColor(results.niveau_risque);
+  }, [results.niveau_risque]);
 
-  const getRiskIcon = (level: RiskLevel) => {
-    switch (level) {
-      case RiskLevel.FAIBLE: return <CheckCircle />;
-      case RiskLevel.MODERE: return <Warning />;
-      case RiskLevel.ELEVE: return <Error />;
-      case RiskLevel.TRES_ELEVE: return <Cancel />;
-      default: return <CheckCircle />;
-    }
-  };
+  // Memoized risk icon
+  const riskIcon = useMemo(() => {
+    const getRiskIcon = (level: RiskLevel) => {
+      switch (level) {
+        case RiskLevel.FAIBLE: return <CheckCircle />;
+        case RiskLevel.MODERE: return <Warning />;
+        case RiskLevel.ELEVE: return <Error />;
+        case RiskLevel.TRES_ELEVE: return <Cancel />;
+        default: return <CheckCircle />;
+      }
+    };
+    return getRiskIcon(results.niveau_risque);
+  }, [results.niveau_risque]);
 
-  const getRiskSeverity = (level: RiskLevel): "success" | "warning" | "error" => {
-    switch (level) {
-      case RiskLevel.FAIBLE: return "success";
-      case RiskLevel.MODERE: return "warning";
-      case RiskLevel.ELEVE: 
-      case RiskLevel.TRES_ELEVE: return "error";
-      default: return "success";
-    }
-  };
+  // Memoized risk severity
+  const riskSeverity = useMemo(() => {
+    const getRiskSeverity = (level: RiskLevel): "success" | "warning" | "error" => {
+      switch (level) {
+        case RiskLevel.FAIBLE: return "success";
+        case RiskLevel.MODERE: return "warning";
+        case RiskLevel.ELEVE: 
+        case RiskLevel.TRES_ELEVE: return "error";
+        default: return "success";
+      }
+    };
+    return getRiskSeverity(results.niveau_risque);
+  }, [results.niveau_risque]);
 
-  const { color, bg } = getRiskColor(results.niveau_risque);
+  const { color, bg } = riskColors;
 
-  // Fonction pour traduire les niveaux de risque en français lisible
-  const getRiskLabelFr = (level: RiskLevel): string => {
-    switch (level) {
-      case RiskLevel.FAIBLE: return 'Faible';
-      case RiskLevel.MODERE: return 'Modéré';
-      case RiskLevel.ELEVE: return 'Élevé';
-      case RiskLevel.TRES_ELEVE: return 'Très élevé';
-      default: return level;
-    }
-  };
+  // Memoized risk label translation
+  const riskLabelFr = useMemo(() => {
+    const getRiskLabelFr = (level: RiskLevel): string => {
+      switch (level) {
+        case RiskLevel.FAIBLE: return 'Faible';
+        case RiskLevel.MODERE: return 'Modéré';
+        case RiskLevel.ELEVE: return 'Élevé';
+        case RiskLevel.TRES_ELEVE: return 'Très élevé';
+        default: return level;
+      }
+    };
+    return getRiskLabelFr(results.niveau_risque);
+  }, [results.niveau_risque]);
 
-  const generateJSONExport = () => {
+  // Memoized export functions to prevent recreation on every render
+  const generateJSONExport = useCallback(() => {
     const exportData = {
       metadata: {
         application: "Perspicuus LCBFT",
@@ -99,7 +115,7 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
       risk_assessment_results: {
         overall: {
           risk_level: results.niveau_risque,
-          risk_level_fr: getRiskLabelFr(results.niveau_risque),
+          risk_level_fr: riskLabelFr,
           total_score: results.score_total,
           scoring_system: "open_scoring"
         },
@@ -128,9 +144,9 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
     link.href = URL.createObjectURL(dataBlob);
     link.download = `perspicuus_evaluation_${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
-  };
+  }, [formData, results, riskLabelFr]);
 
-  const generateCompactJSONExport = () => {
+  const generateCompactJSONExport = useCallback(() => {
     const compactData = {
       timestamp: new Date().toISOString(),
       risk_level: results.niveau_risque,
@@ -154,10 +170,10 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
     link.href = URL.createObjectURL(dataBlob);
     link.download = `perspicuus_compact_${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
-  };
+  }, [results]);
 
-  // Données pour le graphique radar
-  const radarData = [
+  // Memoized radar chart data to prevent recreation on every render
+  const radarData = useMemo(() => [
     {
       category: 'Risque Géographique',
       score: results.score_geo?.score || 0
@@ -170,15 +186,15 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
       category: 'Risque Client',
       score: results.score_client?.score || 0
     }
-  ];
+  ], [results.score_geo?.score, results.score_produit?.score, results.score_client?.score]);
 
-  // Calcul du max pour le graphique radar (avec une marge)
-  const maxRadarScore = Math.max(
+  // Memoized max radar score calculation
+  const maxRadarScore = useMemo(() => Math.max(
     results.score_geo?.score || 0,
     results.score_produit?.score || 0,
     results.score_client?.score || 0,
     5 // Minimum pour avoir une échelle visible
-  ) + 2;
+  ) + 2, [results.score_geo?.score, results.score_produit?.score, results.score_client?.score]);
 
 
   return (
@@ -239,11 +255,11 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
         <Card elevation={2} sx={{ flex: 1 }}>
           <CardContent sx={{ textAlign: 'center', backgroundColor: bg }}>
             <Box display="flex" alignItems="center" justifyContent="center" mb={2}>
-              {React.cloneElement(getRiskIcon(results.niveau_risque), { 
+              {React.cloneElement(riskIcon, { 
                 sx: { fontSize: 40, color, mr: 2 } 
               })}
               <Typography variant="h3" sx={{ color, fontWeight: 'bold' }}>
-                {getRiskLabelFr(results.niveau_risque)}
+                {riskLabelFr}
               </Typography>
             </Box>
             <LinearProgress 
@@ -409,7 +425,7 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
           </Box>
           
           <Alert 
-            severity={getRiskSeverity(results.niveau_risque)} 
+            severity={riskSeverity} 
             sx={{ mb: 3, fontSize: '1.1em' }}
           >
             <Typography variant="h6" gutterBottom>
@@ -435,3 +451,6 @@ export const SimpleResultsDisplay: React.FC<SimpleResultsDisplayProps> = ({ resu
     </Box>
   );
 };
+
+// Memoized component to prevent unnecessary re-renders
+export const SimpleResultsDisplay = React.memo(SimpleResultsDisplayComponent);
