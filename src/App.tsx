@@ -28,7 +28,8 @@ import { WizardEvaluationForm } from './components/WizardEvaluationForm';
 import { SimpleResultsDisplay } from './components/SimpleResultsDisplay';
 import { SimpleKnowledgeBase } from './components/SimpleKnowledgeBase';
 import { LegalMentions } from './components/LegalMentions';
-import { RiskAssessmentResult, RiskAssessmentRequest } from './types/lcbft';
+import { RiskAssessmentResult, RiskAssessmentRequest, RiskLevel } from './types/lcbft';
+import { SecureValidationService, ValidationError } from './services/validationService';
 import { PDFGenerator } from './services/pdfGenerator';
 
 // Thème Material Design personnalisé
@@ -129,60 +130,68 @@ function App() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validation sécurisée du fichier
+    const fileValidation = SecureValidationService.validateFileMetadata(file);
+    if (!fileValidation.valid) {
+      alert(`Erreur de fichier: ${fileValidation.error}`);
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const jsonData = JSON.parse(e.target?.result as string);
+        const jsonString = e.target?.result as string;
+        
+        // Validation sécurisée du JSON
+        const validationResult = SecureValidationService.validateJSONExport(jsonString);
+        
+        if (!validationResult.success) {
+          // Tentative de validation comme évaluation simple
+          const assessmentResult = SecureValidationService.validateRiskAssessment(jsonString);
+          if (!assessmentResult.success) {
+            alert(`Fichier JSON invalide: ${assessmentResult.error.message}`);
+            return;
+          }
+          
+          // Import d'une évaluation simple
+          setCurrentFormData(assessmentResult.data as any);
+          setCurrentTab(0); // Retour à l'évaluation
+          console.log("✅ Évaluation importée avec succès");
+          return;
+        }
+
+        const jsonData = validationResult.data;
         
         // Valider que c'est un export Perspicuus
-        if (jsonData.metadata?.application === "Perspicuus LCBFT" || jsonData.timestamp) {
+        if (jsonData.metadata?.application === "Perspicuus LCBFT") {
           // Import JSON complet
           if (jsonData.evaluation_request && jsonData.risk_assessment_results) {
-            setCurrentFormData(jsonData.evaluation_request);
-            setAssessmentResults(jsonData.risk_assessment_results);
+            setCurrentFormData(jsonData.evaluation_request as any);
+            setAssessmentResults(jsonData.risk_assessment_results as any);
             setCurrentTab(1); // Aller aux résultats
             
             // Notification de succès (optionnelle)
             console.log("✅ Évaluation importée avec succès (format complet)");
           }
-          // Import JSON compact - reconstruction des données minimales
-          else if (jsonData.risk_level && jsonData.total_score) {
+          // Import JSON compact - reconstruction des données minimales  
+          else if (jsonData.risk_assessment_results?.overall?.risk_level && jsonData.risk_assessment_results?.overall?.total_score) {
             // Créer un objet RiskAssessmentResult basique depuis le format compact
             const reconstructedResults: RiskAssessmentResult = {
-              niveau_risque: jsonData.risk_level,
-              score_total: jsonData.total_score,
+              niveau_risque: jsonData.risk_assessment_results.overall.risk_level as RiskLevel,
+              score_total: jsonData.risk_assessment_results.overall.total_score,
               score_geo: { 
-                score: jsonData.scores?.geographic || 0, 
-                justifications: jsonData.key_factors?.filter((f: string) => 
-                  f.toLowerCase().includes('géographique') || 
-                  f.toLowerCase().includes('pays') ||
-                  f.toLowerCase().includes('distance') ||
-                  f.toLowerCase().includes('frontière')
-                ) || []
+                score: jsonData.risk_assessment_results.geographic_risk?.score || 0, 
+                justifications: jsonData.risk_assessment_results.geographic_risk?.justifications || []
               },
               score_produit: { 
-                score: jsonData.scores?.product_service || 0, 
-                justifications: jsonData.key_factors?.filter((f: string) => 
-                  f.toLowerCase().includes('transaction') || 
-                  f.toLowerCase().includes('paiement') || 
-                  f.toLowerCase().includes('montant') ||
-                  f.toLowerCase().includes('cryptomonnaies') ||
-                  f.toLowerCase().includes('espèces') ||
-                  f.toLowerCase().includes('secteur')
-                ) || []
+                score: jsonData.risk_assessment_results.product_service_risk?.score || 0, 
+                justifications: jsonData.risk_assessment_results.product_service_risk?.justifications || []
               },
               score_client: { 
-                score: jsonData.scores?.client || 0, 
-                justifications: jsonData.key_factors?.filter((f: string) => 
-                  f.toLowerCase().includes('client') || 
-                  f.toLowerCase().includes('pep') || 
-                  f.toLowerCase().includes('sanction') ||
-                  f.toLowerCase().includes('âge') ||
-                  f.toLowerCase().includes('notoriété') ||
-                  f.toLowerCase().includes('réticence')
-                ) || []
+                score: jsonData.risk_assessment_results.client_risk?.score || 0, 
+                justifications: jsonData.risk_assessment_results.client_risk?.justifications || []
               },
-              recommandations: ["Évaluation importée depuis un format compact - recommandations détaillées non disponibles"]
+              recommandations: jsonData.risk_assessment_results.recommendations || ["Évaluation importée - recommandations non disponibles"]
             };
             
             setAssessmentResults(reconstructedResults);

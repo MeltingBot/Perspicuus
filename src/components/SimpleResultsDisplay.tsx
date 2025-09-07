@@ -440,9 +440,11 @@ const SimpleResultsDisplayComponent: React.FC<SimpleResultsDisplayProps> = ({ re
             {results.recommandations.map((rec, index) => (
               <Paper key={index} elevation={1} sx={{ p: 2 }}>
                 <Typography 
-                  variant="body1" 
-                  dangerouslySetInnerHTML={{ __html: rec }}
-                />
+                  variant="body1"
+                  sx={{ whiteSpace: 'pre-line' }}
+                >
+                  {rec.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')}
+                </Typography>
               </Paper>
             ))}
           </Stack>

@@ -2,6 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    
+    <!-- Content Security Policy pour la sécurité -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline';
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: blob:;
+      connect-src 'self';
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      frame-ancestors 'none';
+      upgrade-insecure-requests;
+    " />
+    
+    <!-- Protection contre le clickjacking -->
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    
+    <!-- Protection contre le MIME type sniffing -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    
+    <!-- Protection XSS pour navigateurs legacy -->
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    
+    <!-- Politique de référent stricte -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
